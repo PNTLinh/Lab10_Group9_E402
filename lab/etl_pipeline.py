@@ -80,6 +80,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     log(f"cleaned_csv={cleaned_path.relative_to(ROOT)}")
     log(f"quarantine_csv={quar_path.relative_to(ROOT)}")
 
+    # Log per-reason breakdown — chống trivial / metric_impact evidence
+    from collections import Counter
+    reason_counts = Counter(r.get("reason", "unknown") for r in quarantine)
+    for reason, cnt in sorted(reason_counts.items()):
+        log(f"quarantine_reason[{reason}]={cnt}")
+
     results, halt = run_expectations(cleaned)
     for r in results:
         sym = "OK" if r.passed else "FAIL"
