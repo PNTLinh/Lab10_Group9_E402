@@ -91,6 +91,13 @@ So sánh hai file eval cho thấy khác biệt rõ ở câu `q_refund_window`:
 
 Các câu còn lại (`q_p1_sla`, `q_lockout`, `q_leave_version`) ổn định với `contains_expected=yes`; riêng `q_leave_version` vẫn đạt `top1_doc_expected=yes`.  
 
+### Bảng kết quả grading_run.jsonl
+
+| id         | question                                                                                                   | top1_doc_id      | contains_expected | hits_forbidden | top1_doc_matches | top_k_used | Ghi chú |
+|------------|------------------------------------------------------------------------------------------------------------|------------------|-------------------|----------------|------------------|------------|---------|
+| gq_d10_01  | Theo policy hoàn tiền nội bộ, khách có tối đa bao nhiêu ngày làm việc để gửi yêu cầu hoàn tiền sau khi đơn được xác nhận? | policy_refund_v4 | true              | false          |                  | 5          | Đúng 7 ngày, không còn 14 ngày |
+| gq_d10_02  | Ticket P1: thời gian resolution SLA là bao nhiêu giờ?                                                      | sla_p1_2026      | true              | false          |                  | 5          | Đúng 4 giờ |
+| gq_d10_03  | Theo chính sách nghỉ phép hiện hành (2026), nhân viên dưới 3 năm kinh nghiệm được bao nhiêu ngày phép năm?  | hr_leave_policy  | true              | false          | true             | 5          | Đúng 12 ngày, top-1 đúng version |
 Từ đó nhóm kết luận: inject run làm tăng rủi ro "context contamination" cho retrieval dù top-1 chưa sai hoàn toàn. Run chuẩn đã xóa dấu hiệu stale trong top-k và phù hợp mục tiêu Day 10 là kiểm soát chất lượng dữ liệu trước khi agent truy vấn.
 
 ---
