@@ -16,7 +16,7 @@
 | `freshness_check` | `FAIL freshness_sla_exceeded` | Data trong vector store cũ hơn SLA (mặc định 24 h) |
 | `freshness_check` | `WARN no_timestamp_in_manifest` | Manifest thiếu trường thời gian — không thể xác nhận độ tươi |
 | Expectation suite | `expectation[refund_no_stale_14d_window] FAIL` | Chunk hoàn tiền 14 ngày vẫn còn trong cleaned data |
-| Expectation suite | `expectation[no_bom_in_cleaned_chunks] FAIL` | BOM/zero-width chars chưa bị strip — ảnh hưởng embedding |
+| Expectation suite | `expectation[no_bom_in_cleaned_chunks] FAIL` | BOM/zero-width chars lọt vào cleaned data (rule quarantine bị bypass/lỗi)|
 | Eval retrieval | `hits_forbidden > 0` | Top-k trả về chunk bị cấm (stale version) |
 
 ---
@@ -27,7 +27,7 @@
 |------|----------|------------------|
 | 1 | Kiểm tra `artifacts/manifests/*.json` | Tìm manifest mới nhất; đọc `latest_exported_at` và `run_timestamp` |
 | 2 | Chạy lệnh freshness (xem bên dưới) | In ra `PASS`, `WARN`, hoặc `FAIL` kèm `age_hours` |
-| 3 | Mở `artifacts/quarantine/*.csv` | Xem dòng bị loại; kiểm tra cột `reason` — có `stale_refund_14d` không? |
+| 3 | Mở `artifacts/quarantine/*.csv` | Xem dòng bị loại; kiểm tra cột `reason` (ví dụ: `duplicate_chunk_text`, `stale_hr_policy_effective_date`, `bom_or_invisible_chars`) |
 | 4 | Chạy `python eval_retrieval.py` | `hits_forbidden=0` là bình thường; > 0 → vector store còn chunk cũ |
 
 ### Lệnh kiểm tra freshness
@@ -50,10 +50,10 @@ FAIL {"latest_exported_at": "2026-04-12T06:00:00+00:00", "age_hours": 73.5, "sla
 |--------|-----------|-----------------|-----------|
 | **PASS** | `age_hours ≤ sla_hours` (mặc định 24 h) | Data đủ tươi — `latest_exported_at` trong manifest không cũ hơn SLA. Vector store đang phục vụ version hợp lệ. | Không cần làm gì. Ghi log để audit. |
 | **WARN** | Manifest tồn tại nhưng **không có** trường `latest_exported_at` lẫn `run_timestamp`, hoặc giá trị không parse được thành ISO datetime. | Không thể xác định độ tươi — pipeline có thể đã chạy thiếu bước ghi metadata. Data vẫn có thể dùng nhưng rủi ro ẩn. | Kiểm tra log run tương ứng trong `artifacts/logs/`; rerun pipeline để sinh manifest đúng. |
-| **FAIL** | (a) File manifest **không tồn tại**, hoặc (b) `age_hours > sla_hours` | (a) Pipeline chưa chạy / artifact bị xóa. (b) Data cũ hơn SLA — có nguy cơ chunk stale trong vector store. | Xem mục Mitigation bên dưới. |
+| **FAIL** | `age_hours > sla_hours` | Data cũ hơn SLA — có nguy cơ chunk stale trong vector store. | Xem mục Mitigation bên dưới. |
 
 > **Biến môi trường:** `FRESHNESS_SLA_HOURS` ghi đè ngưỡng mặc định 24 h.  
-> Ví dụ: `FRESHNESS_SLA_HOURS=48 python etl_pipeline.py freshness --manifest ...`
+> Ví dụ PowerShell: `$env:FRESHNESS_SLA_HOURS=48; python etl_pipeline.py freshness --manifest ...`
 
 > **Exit code:** lệnh trả về `0` khi PASS hoặc WARN; trả về `1` khi FAIL — tích hợp được vào CI/CD pipeline.
 
@@ -75,13 +75,13 @@ python etl_pipeline.py freshness --manifest artifacts/manifests/<manifest_mới>
 
 ```bash
 # Manifest không có → chạy lại pipeline từ đầu
-python etl_pipeline.py run --run-id recovery-$(date +%Y%m%dT%H%M)
+python etl_pipeline.py run --run-id recovery-2026-04-15T09-30Z
 ```
 
 ### Tạm thời (nếu chưa thể rerun ngay)
 
 - Thêm banner trong UI agent: _"Dữ liệu chính sách đang được cập nhật — vui lòng kiểm tra lại sau."_
-- Hạ thấp confidence threshold của retrieval để tránh trả lời sai.
+- Tăng retrieval confidence threshold hoặc bật chế độ "không đủ bằng chứng thì từ chối trả lời".
 
 ---
 
