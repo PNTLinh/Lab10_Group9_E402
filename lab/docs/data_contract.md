@@ -33,21 +33,16 @@
 
 > Record bị flag đi đâu? Ai approve merge lại?  
 
-Drop:  
-Record có chunk_text rỗng  
-Record sai format date không thể parse  
-Duplicate hoàn toàn  
-Quarantine:   
-Conflict nội dung (ví dụ 7 ngày vs 14 ngày)  
-Sai format nhưng có thể sửa  
-Version mismatch  
-Approve merge:  
-  
-Xác định bản đúng  
-Merge lại sau khi được approve  
+Record bị flag đi đâu?  
+ Được đưa vào quarantine dataset (ghi ra file riêng bằng write_quarantine_csv)  
+ Các record không đạt yêu cầu sẽ bị loại bỏ ngay trong clean_rows() và không xuất hiện trong output
+
+Ai approve merge lại?  
+ Thực hiện bởi owner       
 
 ---
 
 ## 4. Phiên bản & canonical
 
 > Source of truth cho policy refund: file nào / version nào?
+policy_refund_v4 (effective_date = 2026-02-01)
