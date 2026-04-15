@@ -1,6 +1,6 @@
 # Báo Cáo Cá Nhân — Lab Day 10: Data Pipeline & Observability
 
-**Họ và tên:** [Điền tên bạn ở đây]
+**Họ và tên:** Nguyễn Hoàng Khải Minh
 **Vai trò:** Cleaning & Quality Owner — Sprint 3
 **Ngày nộp:** 2026-04-15
 **Độ dài yêu cầu:** **400–650 từ**
